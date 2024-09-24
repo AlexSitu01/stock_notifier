@@ -26,7 +26,7 @@ class Stocks:
 
         response = requests.get(url=STOCK_ENDPOINT, params=stock_params)
         response.raise_for_status()
-        if len(response.json()) == 0:
+        if len(response.json()["Global Quote"]) == 0:
             return f"{stock_symbol} doesn't exist"
         print(response.json())
         data = response.json()["Global Quote"]

@@ -6,13 +6,14 @@ import pandas as pd
 import datetime
 from Stocks import Stocks
 from news import News
+from Pixela import Pixela
 
 load_dotenv()
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 #at what time the check function is called
 utc = datetime.timezone.utc
-TIME = datetime.time(hour=3, minute=37, tzinfo=utc)
+TIME = datetime.time(hour=1, minute=0, tzinfo=utc)
 class Bot:
     def __init__(self):
         if not os.path.isfile("users.csv"):
@@ -27,7 +28,19 @@ class Bot:
         self.bot = commands.Bot(command_prefix='!', intents=intents)
         guild = discord.Object(id=1169059604370575381)
 
-        #Bot commands
+#------------------------------------------ Bot commands ------------------------------------------
+        @self.bot.hybrid_command(name="pingraph")
+        async def pin_graph(ctx, user_id:str = None, graph_id:str = None):
+            await ctx.send(Pixela.pin_graph(user_id, graph_id))
+
+        @self.bot.hybrid_command(name="addcodetime")
+        async def add_code_time(ctx, amt_time: float):
+            await ctx.send(Pixela.update_pixel(amt_time))
+
+        @self.bot.hybrid_command(name="getpixelalink")
+        async def get_pixela_link(ctx, user_name: str = None):
+            await ctx.send(Pixela.get_user_link(user_name))
+
         @self.bot.hybrid_command(name="test")
         async def test(ctx):
             await ctx.send("This is a hybrid command!")
@@ -90,6 +103,30 @@ class Bot:
             for stock_symbol in args:
                 await ctx.send(Stocks.remove_stock(stock_symbol))
 
+        @self.bot.hybrid_command(name="check")
+        async def check_stocks(ctx):
+            stock_symbols = Stocks.get_stock_list()
+            string_output = []
+            for stock_symbol in stock_symbols:
+                output_stock = Stocks.check_stock(stock_symbol)
+                output_news = News.get_news(stock_symbol)
+                if output_stock is not None:
+                    string_output.append(output_stock)
+                    string_output.append(output_news)
+            print(f"String Output: {string_output}")
+            #send all users any information about stock price changes
+            user_ids = self.data["user_id"].values
+            for user_id in user_ids:
+                user = await self.bot.fetch_user(user_id)
+                #if string_output is empty
+                if not string_output:
+                    await user.send("None of the stocks have increased significantly.")
+                #if one or more stocks have increased in value, then send that to the user.
+                else:
+                    await user.send("\n".join(string_output))
+
+#------------------------------------------ run method at TIME ------------------------------------------
+
         @tasks.loop(time=TIME)
         async def check_stocks():
             stock_symbols = Stocks.get_stock_list()
@@ -112,7 +149,8 @@ class Bot:
                 else:
                     await user.send("\n".join(string_output))
 
-        #Events
+#------------------------------------------ Events ------------------------------------------
+
         @self.bot.event
         async def on_ready():
             check_stocks.start()
