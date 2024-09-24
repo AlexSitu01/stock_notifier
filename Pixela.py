@@ -22,14 +22,13 @@ class Pixela:
             "X-USER-TOKEN": Pixela.TOKEN
         }
         response = requests.put(url=f"{Pixela.pixel_endpoint}/{Pixela.today}", headers=headers, json=pixel_config_put)
-        response.raise_for_status()
         if response.json()["isSuccess"]:
             return "Okay I've added it to the graph"
         else:
             print(response.text)
             return "Something seems to have gone wrong, please try again"
     @staticmethod
-    def get_user_link(user:str ) -> str:
+    def get_user_link(user: str) -> str:
         if not user:
             user = Pixela.USER_NAME
         url = f"https://pixe.la/@{user}"

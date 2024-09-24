@@ -163,3 +163,5 @@ cython_debug/
 
 #csv
 *.csv
+users.csv
+stocks.csv
